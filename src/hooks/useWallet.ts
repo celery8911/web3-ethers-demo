@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { JsonRpcSigner } from 'ethers';
-import { connectWallet, getCurrentNetwork, getBalance, isMetaMaskInstalled } from '../utils/ethers';
+import { connectWallet, getCurrentNetwork, getBalance, isMetaMaskInstalled, getMetaMaskProvider } from '../utils/ethers';
 
 interface WalletState {
   address: string | null;
@@ -73,7 +73,8 @@ export const useWallet = () => {
   }, [walletState.address]);
 
   useEffect(() => {
-    if (!isMetaMaskInstalled()) return;
+    const metamaskProvider = getMetaMaskProvider();
+    if (!metamaskProvider) return;
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
@@ -87,12 +88,12 @@ export const useWallet = () => {
       connect();
     };
 
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
+    metamaskProvider.on('accountsChanged', handleAccountsChanged);
+    metamaskProvider.on('chainChanged', handleChainChanged);
 
     return () => {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      window.ethereum.removeListener('chainChanged', handleChainChanged);
+      metamaskProvider.removeListener('accountsChanged', handleAccountsChanged);
+      metamaskProvider.removeListener('chainChanged', handleChainChanged);
     };
   }, [connect, disconnect, walletState.address]);
 

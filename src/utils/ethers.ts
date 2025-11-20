@@ -29,15 +29,33 @@ export const NETWORKS = {
 // 零地址
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
+// 获取 MetaMask Provider（优先使用 MetaMask）
+export const getMetaMaskProvider = () => {
+  if (typeof window === 'undefined' || !window.ethereum) return null;
+
+  // 如果有多个钱包，尝试获取 MetaMask
+  if (window.ethereum.providers) {
+    return window.ethereum.providers.find((p: { isMetaMask?: boolean }) => p.isMetaMask) || null;
+  }
+
+  // 如果只有一个钱包且是 MetaMask
+  if (window.ethereum.isMetaMask) {
+    return window.ethereum;
+  }
+
+  return null;
+};
+
 // 检查 MetaMask 是否安装
 export const isMetaMaskInstalled = (): boolean => {
-  return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
+  return getMetaMaskProvider() !== null;
 };
 
 // 获取 Provider
 export const getProvider = (): BrowserProvider | null => {
-  if (!isMetaMaskInstalled()) return null;
-  return new BrowserProvider(window.ethereum);
+  const provider = getMetaMaskProvider();
+  if (!provider) return null;
+  return new BrowserProvider(provider);
 };
 
 // 连接钱包
@@ -45,16 +63,38 @@ export const connectWallet = async (): Promise<{
   address: string;
   signer: JsonRpcSigner;
 }> => {
-  const provider = getProvider();
-  if (!provider) throw new Error('MetaMask is not installed');
+  const metamaskProvider = getMetaMaskProvider();
+  if (!metamaskProvider) throw new Error('MetaMask is not installed');
 
-  const accounts = await provider.send('eth_requestAccounts', []);
-  const signer = await provider.getSigner();
+  try {
+    // 直接使用 MetaMask provider 请求连接
+    const accounts = await metamaskProvider.request({
+      method: 'eth_requestAccounts'
+    });
 
-  return {
-    address: accounts[0],
-    signer,
-  };
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No accounts found. Please unlock MetaMask and try again.');
+    }
+
+    const provider = new BrowserProvider(metamaskProvider);
+    const signer = await provider.getSigner();
+
+    return {
+      address: accounts[0],
+      signer,
+    };
+  } catch (error: unknown) {
+    // 处理常见错误
+    const err = error as { code?: number; message?: string };
+    if (err.code === 4001) {
+      throw new Error('Connection request rejected. Please approve the connection in MetaMask.');
+    } else if (err.code === -32603) {
+      throw new Error('MetaMask internal error. Please refresh the page and try again.');
+    } else if (err.message?.includes('circuit breaker')) {
+      throw new Error('MetaMask is temporarily unavailable. Please wait a moment and try again.');
+    }
+    throw error;
+  }
 };
 
 // 获取当前网络
@@ -74,10 +114,11 @@ export const getCurrentNetwork = async (): Promise<{
 
 // 切换网络
 export const switchNetwork = async (chainId: string): Promise<void> => {
-  if (!isMetaMaskInstalled()) throw new Error('MetaMask is not installed');
+  const metamaskProvider = getMetaMaskProvider();
+  if (!metamaskProvider) throw new Error('MetaMask is not installed');
 
   try {
-    await window.ethereum.request({
+    await metamaskProvider.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId }],
     });
@@ -86,7 +127,7 @@ export const switchNetwork = async (chainId: string): Promise<void> => {
     if (error.code === 4902) {
       const networkConfig = Object.values(NETWORKS).find(n => n.chainId === chainId);
       if (networkConfig) {
-        await window.ethereum.request({
+        await metamaskProvider.request({
           method: 'wallet_addEthereumChain',
           params: [networkConfig],
         });
