@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useWallet } from '../hooks/useWallet';
+import { useWalletContext } from '../contexts/WalletContext';
 import { switchNetwork, NETWORKS } from '../utils/ethers';
 
 export const NetworkSwitch = () => {
-  const { chainId, isConnected } = useWallet();
+  const { chainId, isConnected } = useWalletContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

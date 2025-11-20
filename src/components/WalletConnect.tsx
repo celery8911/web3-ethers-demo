@@ -1,7 +1,7 @@
-import { useWallet } from '../hooks/useWallet';
+import { useWalletContext } from '../contexts/WalletContext';
 
 export const WalletConnect = () => {
-  const { address, balance, networkName, isConnected, isInstalled, loading, error, connect, disconnect } = useWallet();
+  const { address, balance, networkName, isConnected, isInstalled, loading, error, connect, disconnect } = useWalletContext();
 
   if (!isInstalled) {
     return (
