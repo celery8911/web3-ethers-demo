@@ -147,14 +147,17 @@ export const getBalance = async (address: string): Promise<string> => {
   return formatEther(balance);
 };
 
-// 发送交易到零地址
-export const sendToZeroAddress = async (
+// 发送交易（支持添加 data 字段）
+export const sendTransaction = async (
   signer: JsonRpcSigner,
-  amount: string
+  to: string,
+  amount: string,
+  data?: string
 ): Promise<string> => {
   const tx = await signer.sendTransaction({
-    to: ZERO_ADDRESS,
+    to,
     value: parseEther(amount),
+    data: data || '0x',
   });
 
   return tx.hash;

@@ -1,5 +1,6 @@
 import { WalletConnect } from './components/WalletConnect';
 import { NetworkSwitch } from './components/NetworkSwitch';
+import { HexConverter } from './components/HexConverter';
 
 function App() {
   return (
@@ -14,9 +15,13 @@ function App() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <WalletConnect />
           <NetworkSwitch />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <HexConverter />
         </div>
       </div>
     </div>
