@@ -3,6 +3,7 @@ import { WalletConnect } from './components/WalletConnect';
 import { NetworkSwitch } from './components/NetworkSwitch';
 import { HexConverter } from './components/HexConverter';
 import { Transfer } from './components/Transfer';
+import { ChainDataReader } from './components/ChainDataReader';
 
 function App() {
   return (
@@ -26,6 +27,10 @@ function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <HexConverter />
             <Transfer />
+          </div>
+
+          <div className="mb-6">
+            <ChainDataReader />
           </div>
         </div>
       </div>
